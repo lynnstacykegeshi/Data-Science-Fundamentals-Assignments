@@ -1,0 +1,168 @@
+---
+title: "Implementation of IDA and EDA"
+author: "Lynnstacy Kegeshi"
+date: "2025-01-24"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+  pdf_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Introduction
+For Assignment Two of Data Science Fundamentals, we shall be illustrating the concepts of initial data analysis(IDA) and exploratory data analysis (EDA) on the Kaggle Dataset Co2 Emissions analysis [Kaggle](https://www.kaggle.com/datasets/johnsonmaela/co2-emissions-analysis?select=1.+Co2_Emissions_by_Sectors.csv).
+
+The goal of this analysis is to investigate global CO2 emissions trends and their relationship with energy consumption, population growth, urbanization, and economic indicators. By exploring patterns and relationships across sectors, regions, and countries, we aim to identify key drivers of emissions and provide actionable insights for reducing them.
+
+As part of this analysis, we will develop a statistical model to understand how factors like energy consumption, population size, and economic activity influence CO2 emissions.
+
+# Initial Data Analysis (IDA)
+The goal of IDA is to get a preliminary understanding of the dataset.The steps followed in this process are to ensure the data set is clean correct and complete.
+
+Crucial steps in IDA
+* Judicious and shrewd look at data:
+    - Enforcing right naming conventions - facilitate join(), merge() functions; spelling
+    - Eliminating duplicates
+    - Intuitive understanding of possible patterns (hypotheses/hints) andtrends in data
+* Merging data from multiple sources
+* Cleaning:
+    - Ensuring correct data type encoding (factors, character, integer)
+    - Comparing and ensuring integrity in date/time formats
+    - Checking for missing values i.e., NAs; & adjudging outlier values
+*Enriching and validation prior to use for visualization and modelling,if necessary: Deriving new variables from existing ones, say viaaveraging
+* Reshaping: Data transformation for visualization and further EDA.
+
+Before getting into IDA, we first need to import the dataset into R.
+
+```{r include=FALSE}
+library(tidyverse)
+```
+
+```{r}
+carbon_emissions <- read_csv("carbon_emissions.csv", show_col_types = FALSE)
+```
+
+
+```{r}
+head(carbon_emissions)
+```
+## Discerning first look 
+We conduct a basic review of the data i.e dimension/size (number of rows & columns), variable/column names, data-types (numeric/nominal)
+
+```{r}
+str(carbon_emissions)
+```
+From checking the structure of the data, we observed that it contains two primary data types: characters and numerics.
+
+```{r}
+dim(carbon_emissions)
+```
+Our data has 16 columns and 17686 rows. By examining the column names using the following R command. 
+
+```{r}
+names(carbon_emissions)
+
+```
+We can get an overview of the dataset's structure and determine which variables are most relevant for extracting meaningful insights. These columns include factors such as CO2 emissions across different sectors, energy consumption, population data, and economic indicators.
+
+## Enforcing correct naming conventions
+Here, we ensure variable names are consistent and intuitive by following naming conventions. This is important for:
+
+1. Merging Datasets: Consistent names help align variables correctly when combining datasets.
+2. Avoiding Special Characters: We avoid special characters (like spaces or symbols) to prevent errors when referencing columns in R.
+
+Since the column names in our dataset are clear, intuitive and staight forward, we can proceed to the next step in our IDA.
+
+## Evaluate anomaly, trends & patterns (duplicates) & inconsistencies
+Anomalies deviate significantly from the observations. To check for anomalies, we can get a summary of the data and also use a box plot to visualize any outlier. 
+
+```{r}
+# Summary statistics to check for outliers
+summary(carbon_emissions)
+```
+ The Co2_Emissions_MetricTons column has a minimum value of 0.50, and the maximum is 299.99. We proceed to plot a boxplot for the C02 emissions to check if there might be any anomalies since the mean is 150.33 and median 150.82.
+
+```{r} 
+# Boxplot to visualize outliers for a particular variable (e.g., CO2 emissions)
+boxplot(carbon_emissions$Co2_Emissions_MetricTons, main="CO2 Emissions Outliers")
+```
+
+The boxplot appears symmetric, suggesting that the distribution of CO2 emissions is relatively balanced around the median. There don't seem to be any significant outliers or unusual trends in the data, indicating that the CO2 emissions are consistently distributed.
+
+## Dealing with NAs
+Handling NAs and missing values is impotant because they can lead to wrong interpretations, exceptions in function outputs, or model failures. In cases of large datasets where missing values are inconsequential to the overall size and precision, they can be removed or ignored explicitly. Alternatively, missing values can be imputed using methods such as averages or interpolation techniques (e.g., linear, cubic splines, Hermitian).
+
+
+We check for NA's using the following code.
+
+```{r}
+# Check for NAs in the dataset
+na_count <- colSums(is.na(carbon_emissions))
+
+# Print the count of NAs per column
+print(na_count)
+
+```
+
+From the above output, our data does not have any NA's.For data amalgamation, we can use the `merge()` function or dplyr's join functions like `inner_join`, `left_join`, `right_join`, and `full_join` to combine datasets based on common keys.
+
+## Data Inputation
+One common method of handling missing values is to replace the missing values with the average of the relevant feature. For example, we can use the ave() function from the stats package or a custom function to calculate the average salary for each qualification and fill in the missing values accordingly. 
+
+
+## Dealing with date and time variables
+Dealing with date and time variables can be challenging due to various formats, time zones, and daylight saving time (DST). These variables are critical for time-series models as they dictate temporal behavior like autocorrelations. The lubridate package simplifies this by parsing date-time data, extracting components (year, month, day, hour, seconds), calculating accurate time spans, and handling time zones and DST.
+
+
+## Create New (Informative) Data/Variables
+
+In order to create a more informative analysis, we can derive new variables by grouping the data by Year and calculating the mean CO2 emissions for different sectors like agriculture, automobiles, domestic, and industrial emissions. This new variable will help in identifying trends over time and provide insights into sector-specific CO2 emission patterns. We shall use the `dplyr` package.
+
+```{r}
+library(dplyr)
+
+# Group data by 'Year' and calculate the mean emissions for each sector
+emission_means <- carbon_emissions %>%
+  group_by(Year) %>%
+  summarise(
+    Mean_Agriculture_Emissions = mean(Agriculture_Co2_Emissions_MetricTons, na.rm = TRUE),
+    Mean_Automobile_Emissions = mean(Automobile_Co2_Emissions_MetricTons, na.rm = TRUE),
+    Mean_Domestic_Emissions = mean(Domestic_Co2_Emissions_MetricTons, na.rm = TRUE),
+    Mean_Industrial_Emissions = mean(Industrial_Co2_Emissions_MetricTons, na.rm = TRUE)
+  )
+
+# View the resulting dataframe
+head(emission_means)
+
+```
+
+
+## Data Reshaping
+Functions like `pivot_wider()` and `pivot_longer()` from the tidyr package, along with mutate(), `filter()`, and `select()` from `dplyr`, allow us to effectively alter the structure of the dataset. 
+
+We can create a new column for GDP per Capita, which can be derived from the existing columns GDP (in Billion USD) and Population (in Millions). Using the `mutate()` function from the dplyr package, we can easily calculate and add this new column to our dataset, which can then be used to explore correlations with other variables such as energy consumption or carbon emissions.
+
+```{r}
+carbon_emissions <- carbon_emissions %>%
+  mutate(
+    GDP_Per_Capita = GDP_Billion_USD * 1e9 / (Population_Millions * 1e6)
+  )
+
+# View the updated dataset
+head(carbon_emissions$GDP_Per_Capita,10)
+
+```
+
+
+If we're interested in analyzing data from North America, specifically for the manufacturing industry, we can apply filters to narrow down the data accordingly. The `filter()` function in allows us to select only the rows that match our chosen criteria, like region and industry type. Here's how we can do that:#
+
+```{r}
+filtered_data <- carbon_emissions %>%
+  filter(Region == "North America", 
+         Industry_Type == "Manufacturing")
+```
