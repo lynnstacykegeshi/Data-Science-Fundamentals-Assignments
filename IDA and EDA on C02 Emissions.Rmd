@@ -1,12 +1,12 @@
 ---
-title: "Implementation of IDA and EDA"
+title: "HW 2 Implementation of IDA and EDA"
 author: "Lynnstacy Kegeshi"
-date: "2025-01-24"
+date: "2025-01-29"
 output:
-  html_document:
+  pdf_document:
     toc: true
     number_sections: true
-  pdf_document:
+  html_document:
     toc: true
     number_sections: true
 ---
@@ -17,25 +17,28 @@ knitr::opts_chunk$set(echo = TRUE)
 # Introduction
 For Assignment Two of Data Science Fundamentals, we shall be illustrating the concepts of initial data analysis(IDA) and exploratory data analysis (EDA) on the Kaggle Dataset Co2 Emissions analysis [Kaggle](https://www.kaggle.com/datasets/johnsonmaela/co2-emissions-analysis?select=1.+Co2_Emissions_by_Sectors.csv).
 
-The goal of this analysis is to investigate global CO2 emissions trends and their relationship with energy consumption, population growth, urbanization, and economic indicators. By exploring patterns and relationships across sectors, regions, and countries, we aim to identify key drivers of emissions and provide actionable insights for reducing them.
+The goal of this analysis is to investigate global CO2 emissions trends and their relationship with energy consumption, population growth.
 
-As part of this analysis, we will develop a statistical model to understand how factors like energy consumption, population size, and economic activity influence CO2 emissions.
+
 
 # Initial Data Analysis (IDA)
 The goal of IDA is to get a preliminary understanding of the dataset.The steps followed in this process are to ensure the data set is clean correct and complete.
 
-Crucial steps in IDA
-* Judicious and shrewd look at data:
-    - Enforcing right naming conventions - facilitate join(), merge() functions; spelling
+- **Crucial steps in IDA:**
+  - **Judicious and shrewd look at data:**
+    - Enforcing right naming conventions to facilitate `join()`, `merge()` functions; checking for spelling issues
     - Eliminating duplicates
-    - Intuitive understanding of possible patterns (hypotheses/hints) andtrends in data
-* Merging data from multiple sources
-* Cleaning:
+    - Intuitive understanding of possible patterns (hypotheses/hints) and trends in data
+  - Merging data from multiple sources
+  - **Cleaning:**
     - Ensuring correct data type encoding (factors, character, integer)
     - Comparing and ensuring integrity in date/time formats
-    - Checking for missing values i.e., NAs; & adjudging outlier values
-*Enriching and validation prior to use for visualization and modelling,if necessary: Deriving new variables from existing ones, say viaaveraging
-* Reshaping: Data transformation for visualization and further EDA.
+    - Checking for missing values (i.e., NAs) and identifying outlier values
+  - Enriching and validation prior to use for visualization and modeling, if necessary:
+    - Deriving new variables from existing ones (e.g., via averaging)
+  - **Reshaping:**
+    - Data transformation for visualization and further EDA.
+
 
 Before getting into IDA, we first need to import the dataset into R.
 
@@ -85,14 +88,7 @@ Anomalies deviate significantly from the observations. To check for anomalies, w
 # Summary statistics to check for outliers
 summary(carbon_emissions)
 ```
- The Co2_Emissions_MetricTons column has a minimum value of 0.50, and the maximum is 299.99. We proceed to plot a boxplot for the C02 emissions to check if there might be any anomalies since the mean is 150.33 and median 150.82.
-
-```{r} 
-# Boxplot to visualize outliers for a particular variable (e.g., CO2 emissions)
-boxplot(carbon_emissions$Co2_Emissions_MetricTons, main="CO2 Emissions Outliers")
-```
-
-The boxplot appears symmetric, suggesting that the distribution of CO2 emissions is relatively balanced around the median. There don't seem to be any significant outliers or unusual trends in the data, indicating that the CO2 emissions are consistently distributed.
+The summary of the carbon_emissions dataset shows a wide range of values across different variables. For example, CO2 emissions vary from 0.50 to 299.99 metric tons, with an average around 150.33, suggesting some countries have much higher emissions than others. Energy consumption ranges from 0.63 TWh to almost 1000 TWh, with a median of about 500 TWh, indicating significant differences in energy use. GDP spans from 0.22 billion USD to nearly 25 trillion USD, reflecting the economic disparities between countries. 
 
 ## Dealing with NAs
 Handling NAs and missing values is impotant because they can lead to wrong interpretations, exceptions in function outputs, or model failures. In cases of large datasets where missing values are inconsequential to the overall size and precision, they can be removed or ignored explicitly. Alternatively, missing values can be imputed using methods such as averages or interpolation techniques (e.g., linear, cubic splines, Hermitian).
@@ -166,3 +162,107 @@ filtered_data <- carbon_emissions %>%
   filter(Region == "North America", 
          Industry_Type == "Manufacturing")
 ```
+
+
+# Exploratory Data Analysis (EDA)
+EDA provides framework for choosing appropriate descriptive methods in various data analysis needs. During EDA analyze and investigate data sets and summarize their main characteristics, often employing data visualization methods.
+
+EDA helps determine how best to manipulate data sources to get the answers you need, making it easier for data scientists to discover patterns, spot anomalies, test a hypothesis, or check assumptions.
+
+## Moments
+To check the skewness of the data, we calculated the skewness for both CO_2 emissions and GDP distributions.We used the `moments` package to assess this.
+
+```{r}
+library(moments)
+```
+
+```{r}
+# Calculate skewness for Energy Consumption
+skew_energy <- skewness(carbon_emissions$Energy_Consumption_TWh, na.rm = TRUE)
+skew_energy
+```
+The skewness of Energy Consumption was found to be -0.006, indicating a slightly negative skew. This suggests that the distribution of CO_2 emissions is almost symmetric, with only a very small leftward tail.
+
+```{r}
+# Calculate skewness for Energy Consumption
+skew_energy <- skewness(carbon_emissions$Population_Millions, na.rm = TRUE)
+skew_energy
+```
+
+Similarly, the skewness for Population was found to be -0.003, indicating an extremely slight negative skew. This value suggests that the population distribution is also nearly symmetric, with only a very small tail on the left. 
+
+## Visualization
+### Box Plot 
+
+Box plots are used during EDA to summarize the distribution of a dataset by displaying the median, quartiles, and potential outliers. We proceed to plot a boxplot to check for any anomalies in the `C0_2` Emissions.
+
+```{r} 
+# Boxplot to visualize outliers for a particular variable (e.g., CO2 emissions)
+boxplot(carbon_emissions$Co2_Emissions_MetricTons, main="CO2 Emissions Outliers")
+```
+
+The boxplot appears symmetric, suggesting that the distribution of CO2 emissions is relatively balanced around the median. There don't seem to be any significant outliers or unusual trends in the data, indicating that the CO2 emissions are consistently distributed.  
+
+### Histograms
+We start by visualizing the distributions of key numerical variables, such as `Co2_Emissions_MetricTons` and `GDP_Billion_USD`, using histograms.
+
+```{r}
+co2_hist <- ggplot(carbon_emissions, aes(x = Co2_Emissions_MetricTons))+
+  geom_histogram(bins = 20, fill = "blue", color = "white") +
+  labs(title = "Distribution of CO2 Emissions", x = "CO2 Emissions (Metric Tons)", y = "Frequency")
+
+plot(co2_hist)
+```
+The histogram shows the distribution of CO2 emissions with a nearly uniform spread The bars are relatively consistent in height, indicating that CO2 emissions are evenly distributed without a clear peak or concentration. However, the first and last bins have lower frequencies suggesting that very low and very high CO2 emissions are less common compared to mid-range values. 
+
+```{r}
+gdp_hist <- ggplot(carbon_emissions, aes(x = GDP_Billion_USD))+
+  geom_histogram(bins = 20, fill = "green", color = "white") +
+  labs(title = "Distribution of GDP", x = "GDP (Billion USD)", y = "Frequency")
+
+plot(gdp_hist)
+```
+For GDP, the histogram also appears to be retively uniformly distributed with the middle section having a consistent number of occurences. The very low and high GDP appear at the ends of the histogram indicating they might be fewer occurences.
+
+### Scatter Plots
+To visually explore the relationship between Energy_Consumption_TWh and Population_Millions, we create a scatter plot.
+
+```{r}
+scatter_gdp <- ggplot(carbon_emissions, aes(x = Energy_Consumption_TWh, y = Population_Millions)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  geom_smooth(method = "loess", color = "red", se = FALSE) +
+  scale_x_log10() +  # Log transform x-axis
+  scale_y_log10() +  # Log transform y-axis
+  labs(title = "Population (Millions) vs Energy Consumption",
+       x = "Energy Consumption in TWh (log scale)",
+       y = "Population (Millions) (log scale)") +
+  theme_minimal()
+
+plot(scatter_gdp)
+
+```
+This scatter plot shows the relationship between Population and Energy Consumption. From the plot, there is a general trend where energy consumption increases with population. However, the relationship is not linear, and the data points appear to cluster in certain areas. The trend line in red suggests a saturation point for population around 1,000 million (or 1 billion). Beyond a certain level of energy consumption, additional increases in population do not correspond to significant increases in energy consumption.
+
+### Correlation Analysis
+
+```{r include=FALSE}
+library(corrplot)
+```
+```{r}
+
+# Compute correlation matrix
+cor_matrix <- cor(carbon_emissions[, c("Co2_Emissions_MetricTons", "GDP_Billion_USD", 
+                                        "Energy_Consumption_TWh", "Population_Millions", 
+                                        "Urbanization_Percentage", "Renewable_Energy_Percentage")], 
+                  use = "complete.obs")
+
+# Plot correlation heatmap
+corrplot(cor_matrix, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black")
+
+
+
+```
+This heatmap shows how different factors like CO_2 emissions, GDP, energy consumption, population, urbanization, and renewable energy are related to each other. Darker blue colors indicate a strong positive relationship, meaning the two factors tend to increase together. From the heatmap, we can see that CO_2 emissions are closely linked to GDP and energy consumption, suggesting that higher economic activity and energy use lead to more emissions.
+
+# Conclusion
+In conclusion, our initial and exploratory data analysis (IDA and EDA) on the CO2 emissions dataset has given us insights into the factors affecting CO2 emissions. By carefully examining the data, we identified key trends and patterns, such as the link between CO2 emissions, energy consumption, and GDP. Visualizations like scatter plots and histograms made it easier to see how emissions are distributed and how population growth impacts energy consumption.
