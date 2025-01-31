@@ -12,8 +12,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,
-  dev = "png" )
+knitr::opts_chunk$set(echo = TRUE)
 ```
 # Introduction
 For Assignment Two of Data Science Fundamentals, we shall be illustrating the concepts of initial data analysis(IDA) and exploratory data analysis (EDA) on the Kaggle Dataset Co2 Emissions analysis [Kaggle](https://www.kaggle.com/datasets/johnsonmaela/co2-emissions-analysis?select=1.+Co2_Emissions_by_Sectors.csv).
@@ -109,9 +108,7 @@ print(na_count)
 From the above output, our data does not have any NA's.For data amalgamation, we can use the `merge()` function or dplyr's join functions like `inner_join`, `left_join`, `right_join`, and `full_join` to combine datasets based on common keys.
 
 ## Data Inputation
-One common method of handling missing values is to replace the missing values with the average of the relevant feature. For example, we can use the ave() function from the stats package or a custom function to calculate the average value for each column and fill in the missing values accordingly. 
-
-Since our data did not have any missing values, we do not need to do any data inputation.
+One common method of handling missing values is to replace the missing values with the average of the relevant feature. For example, we can use the ave() function from the stats package or a custom function to calculate the average value and fill in the missing values accordingly. Since our dataset did not have any missing values. This step was not necessary.
 
 
 ## Dealing with date and time variables
@@ -140,7 +137,6 @@ head(emission_means)
 
 ```
 
-
 We can create a new column for GDP per Capita, which can be derived from the existing columns GDP (in Billion USD) and Population (in Millions). Using the `mutate()` function from the dplyr package, we can easily calculate and add this new column to our dataset, which can then be used to explore correlations with other variables such as energy consumption or carbon emissions.
 
 ```{r}
@@ -163,8 +159,10 @@ filtered_data <- carbon_emissions %>%
          Industry_Type == "Manufacturing")
 ```
 
+
 ## Data Reshaping
-Functions like `pivot_wider()` and `pivot_longer()` from the tidyr package, along with mutate(), `filter()`, and `select()` from `dplyr`, allow us to effectively alter the structure of the dataset. 
+Functions like `pivot_wider()` and `pivot_longer()` from the tidyr package, along with mutate(), `filter()`, and `select()` from `dplyr`, allow us to effectively alter the structure of the dataset. Our dataset did not need to be reshaped.
+
 
 
 # Exploratory Data Analysis (EDA)
@@ -181,14 +179,14 @@ library(moments)
 
 ```{r}
 # Calculate skewness for Energy Consumption
-skew_energy <- skewness(carbon_emissions$Energy_Consumption_TWh)
+skew_energy <- skewness(carbon_emissions$Energy_Consumption_TWh, na.rm = TRUE)
 skew_energy
 ```
 The skewness of Energy Consumption was found to be -0.006, indicating a slightly negative skew. This suggests that the distribution of CO_2 emissions is almost symmetric, with only a very small leftward tail.
 
 ```{r}
 # Calculate skewness for Energy Consumption
-skew_energy <- skewness(carbon_emissions$Population_Millions)
+skew_energy <- skewness(carbon_emissions$Population_Millions, na.rm = TRUE)
 skew_energy
 ```
 
@@ -242,24 +240,24 @@ scatter_energy
 
 ```
 
-This scatter plot shows the relationship between Population and Energy Consumption. From the plot, there is no discernible patter. The data points are scattered without a clear trend. Hence, liner regression might not be a good fit for modelling this relationship.
+This scatter plot shows the relationship between Population and Energy Consumption. From the plot, there is no discernible patter. The data points are scattered without a clear trend. Hence, linear regression might not be a good fit for modelling this relationship.
 
-We consider applying log transformation on both axes to check if we can spot a pattern in our data that can assist in future modelling
+We consider applying log transformation on both axes to check if we can spot a pattern in our data that can assist in future modelling.
 
 ```{r}
-scatter_gdp <- ggplot(carbon_emissions, aes(x = Energy_Consumption_TWh, y = Population_Millions)) +
-geom_point(color = "blue", alpha = 0.6) +
-scale_x_log10() + # Log transform x-axis
-scale_y_log10() + # Log transform y-axis
-labs(title = "Population (Millions) vs Energy Consumption",
-x = "Energy Consumption in TWh (log scale)",
-y = "Population (Millions) (log scale)") +
-theme_minimal()
+scatter_log_energy <- ggplot(carbon_emissions, aes(x = Energy_Consumption_TWh, y = Population_Millions)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  scale_x_log10() +  # Log transform x-axis
+  scale_y_log10() +  # Log transform y-axis
+  labs(title = "Population (Millions) vs Energy Consumption",
+       x = "Energy Consumption in TWh (log scale)",
+       y = "Population (Millions) (log scale)") +
+  theme_minimal()
 
-plot(scatter_gdp)
+scatter_log_energy
 
 ```
-This scatter plot shows the relationship between Population and Energy Consumption. From the plot, there is a general trend where energy consumption increases with population. The data points appear to cluster in certain areas. Beyond a certain level of energy consumption, additional increases in population do not correspond to significant increases in energy consumption.
+This scatter plot shows the relationship between Population and Energy Consumption. From the plot, there is a general trend where energy consumption increases with population. However, the relationship is not linear, and the data points appear to cluster in certain areas. Beyond a certain level of energy consumption, additional increases in population do not correspond to significant increases in energy consumption.
 
 ### Correlation Analysis
 
@@ -271,7 +269,8 @@ library(corrplot)
 # Compute correlation matrix
 cor_matrix <- cor(carbon_emissions[, c("Co2_Emissions_MetricTons", "GDP_Billion_USD", 
                                         "Energy_Consumption_TWh", "Population_Millions", 
-                                        "Urbanization_Percentage", "Renewable_Energy_Percentage")])
+                                        "Urbanization_Percentage", "Renewable_Energy_Percentage")], 
+                  use = "complete.obs")
 
 # Plot correlation heatmap
 corrplot(cor_matrix, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black")
